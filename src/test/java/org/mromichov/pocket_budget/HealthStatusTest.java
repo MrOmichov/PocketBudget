@@ -21,18 +21,13 @@ public class HealthStatusTest {
     @Test
     void healthStatusShouldReturnUpMessage() {
         when(healthService.status()).thenReturn(new HealthStatus("UP"));
-
-        restTestClient.get()
+        RestTestClient.ResponseSpec response = restTestClient.get()
                 .uri("/api/health")
-                .exchange()
-                .expectStatus()
-                .is2xxSuccessful();
+                .exchange();
 
-        restTestClient.get()
-                .uri("/api/health")
-                .exchange()
-                .expectBody(HealthStatus.class)
-                .isEqualTo(new HealthStatus("UP"));
+        response.expectStatus().isOk();
+        response.expectHeader().contentType("application/json");
+        response.expectBody(HealthStatus.class).isEqualTo(new HealthStatus("UP"));
     }
 
 }
