@@ -1,4 +1,4 @@
-package org.mromichov.pocket_budget;
+package org.mromichov.pocket_budget.health;
 
 import org.springframework.stereotype.Service;
 
