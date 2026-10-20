@@ -11,7 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
-import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +46,7 @@ public class ExpensesTest {
     @Test
     void expenseMockShouldReturnArrayWithOneExpense() {
         List<Expense> oneExpense = new ArrayList<>();
-        oneExpense.add(new Expense(0, new BigDecimal(300), "food", LocalDate.of(2026, 10, 19)));
+        oneExpense.add(new Expense(0, new BigInteger("300"), "food", LocalDate.of(2026, 10, 19)));
         when(expensesService.expenses()).thenReturn(oneExpense);
         restTestClient.get()
                 .uri("/api/expenses")
@@ -62,5 +62,4 @@ public class ExpensesTest {
                 .jsonPath("$[0].spentAt").isEqualTo("2026-10-19");
 
     }
-
 }
