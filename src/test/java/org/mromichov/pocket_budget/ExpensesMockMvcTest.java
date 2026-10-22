@@ -5,9 +5,11 @@ import org.mromichov.pocket_budget.expenses.Expense;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigInteger;
@@ -22,7 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@Transactional
 public class ExpensesMockMvcTest {
     @Test
     void postAndGetNewExpense(@Autowired MockMvc mvc, @Autowired ObjectMapper objectMapper) throws Exception {
@@ -211,5 +213,32 @@ public class ExpensesMockMvcTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$", hasSize(0)));
         }
+    }
+
+    @Test
+    void postAmountAboveBigintLimitDoesNotSaveExpense(
+            @Autowired MockMvc mvc,
+            @Autowired JdbcTemplate template
+    ) throws Exception {
+        Long before = template.queryForObject(
+                "SELECT count(*) FROM expenses", Long.class
+        );
+
+        mvc.perform(post("/api/expenses")
+                        .contentType("application/json")
+                        .content("""
+                            {
+                                "amount": 9223372036854775808,
+                                "category": "food",
+                                "spentAt": "2026-10-22"
+                            }
+                            """))
+                .andExpect(status().isBadRequest());
+
+        Long after = template.queryForObject(
+                "SELECT count(*) FROM expenses", Long.class
+        );
+
+        assertEquals(before, after);
     }
 }
