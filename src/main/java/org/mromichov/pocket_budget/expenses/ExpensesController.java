@@ -1,16 +1,14 @@
 package org.mromichov.pocket_budget.expenses;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.Errors;
 import org.springframework.validation.FieldError;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -23,8 +21,16 @@ public class ExpensesController {
     }
 
     @GetMapping("/api/expenses")
-    public List<Expense> expenses() {
-        return expensesService.expenses();
+    public ResponseEntity<?> expenses(
+            @RequestParam(defaultValue = "0")
+            @Min(0L)
+            int page,
+            @RequestParam(defaultValue = "20")
+            @Max(100L)
+            @Min(1L)
+            int size
+    ) {
+        return ResponseEntity.ok(expensesService.expenses(page, size));
     }
 
     @PostMapping("/api/expenses")
@@ -39,6 +45,6 @@ public class ExpensesController {
             return ResponseEntity.badRequest().body(bodyErrors);
         }
         Expense expense = expensesService.newExpense(request);
-        return ResponseEntity.created(URI.create("/api/expenses/"+expense.id())).body(expense);
+        return ResponseEntity.created(URI.create("/api/expenses/" + expense.id())).body(expense);
     }
 }

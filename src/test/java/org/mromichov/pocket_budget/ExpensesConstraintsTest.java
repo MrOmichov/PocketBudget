@@ -1,5 +1,6 @@
 package org.mromichov.pocket_budget;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -11,8 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
@@ -53,7 +53,7 @@ class ExpensesConstraintsTest {
                 ));
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void databaseRejectsMissingDate(@Autowired JdbcTemplate template) {
         assertTestDatabase(template);
 
