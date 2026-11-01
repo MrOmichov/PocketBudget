@@ -1,6 +1,8 @@
 package org.mromichov.pocket_budget.expenses;
 
 import jakarta.persistence.*;
+import org.mromichov.pocket_budget.categories.CategoryEntity;
+import org.mromichov.pocket_budget.users.UserEntity;
 
 import java.time.LocalDate;
 
@@ -15,7 +17,13 @@ public class ExpenseEntity {
 
     private long amount;
 
-    private String category;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "category_id", nullable = false)
+    private CategoryEntity category;
 
     @Column(name = "spent_at")
     private LocalDate spentAt;
@@ -23,8 +31,9 @@ public class ExpenseEntity {
     protected ExpenseEntity() {
     }
 
-    public ExpenseEntity(long amount, String category, LocalDate spentAt) {
+    public ExpenseEntity(long amount, UserEntity user, CategoryEntity category, LocalDate spentAt) {
         this.amount = amount;
+        this.user = user;
         this.category = category;
         this.spentAt = spentAt;
     }
@@ -37,7 +46,11 @@ public class ExpenseEntity {
         return amount;
     }
 
-    public String getCategory() {
+    public UserEntity getUser() {
+        return user;
+    }
+
+    public CategoryEntity getCategory() {
         return category;
     }
 

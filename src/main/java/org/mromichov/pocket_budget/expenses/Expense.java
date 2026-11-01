@@ -6,6 +6,7 @@ import java.time.LocalDate;
 public record Expense(
         long id,
         BigInteger amount,
+        long categoryId,
         String category,
         LocalDate spentAt
 ) {
