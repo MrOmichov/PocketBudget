@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.client.RestTestClient;
 import static org.mockito.Mockito.when;
 
 @WebMvcTest(HealthController.class)
+@org.springframework.context.annotation.Import(org.mromichov.pocket_budget.security.SecurityConfig.class)
 @AutoConfigureRestTestClient
 public class HealthStatusTest {
     @Autowired
