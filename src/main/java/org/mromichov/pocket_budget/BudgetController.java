@@ -1,11 +1,15 @@
-package org.mromichov.pocket_budget.expenses;
+package org.mromichov.pocket_budget;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.mromichov.pocket_budget.categories.CategoriesService;
 import org.mromichov.pocket_budget.categories.Category;
+import org.mromichov.pocket_budget.expenses.Expense;
+import org.mromichov.pocket_budget.expenses.ExpensesService;
+import org.mromichov.pocket_budget.expenses.PostExpenseRequest;
 import org.mromichov.pocket_budget.users.BudgetUserDetails;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.Errors;
@@ -13,16 +17,17 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
-public class ExpensesController {
+public class BudgetController {
     private final ExpensesService expensesService;
     private final CategoriesService categoriesService;
 
-    public ExpensesController(ExpensesService expensesService, CategoriesService categoriesService) {
+    public BudgetController(ExpensesService expensesService, CategoriesService categoriesService) {
         this.expensesService = expensesService;
         this.categoriesService = categoriesService;
     }
@@ -34,6 +39,15 @@ public class ExpensesController {
 
     @GetMapping("/api/expenses")
     public ResponseEntity<?> expenses(
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate from,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate to,
+            @RequestParam(required = false)
+            @Min(1L)
+            Long categoryId,
             @RequestParam(defaultValue = "0")
             @Min(0L)
             int page,
@@ -43,7 +57,15 @@ public class ExpensesController {
             int size,
             @AuthenticationPrincipal BudgetUserDetails currentUser
     ) {
-        return ResponseEntity.ok(expensesService.expenses(currentUser.getId(), page, size));
+        return ResponseEntity.ok(expensesService.expenses(
+                        currentUser.getId(),
+                        from,
+                        to,
+                        categoryId,
+                        page,
+                        size
+                )
+        );
     }
 
     @GetMapping("/api/expenses/{id}")

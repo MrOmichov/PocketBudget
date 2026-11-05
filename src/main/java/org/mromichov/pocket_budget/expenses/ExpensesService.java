@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigInteger;
+import java.time.LocalDate;
 
 @Service
 public class ExpensesService {
@@ -27,9 +28,19 @@ public class ExpensesService {
     }
 
     @Transactional(readOnly = true)
-    public ExpensesPageResponse expenses(long userId, int page, int size) {
-        Page<ExpenseEntity> expensesPage = expensesRepository.findByUser_Id(
+    public ExpensesPageResponse expenses(long userId, LocalDate from, LocalDate to, Long categoryId, int page, int size) {
+        if (from != null && to != null && from.isAfter(to)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Начальная дата не может быть после конечной"
+            );
+        }
+
+        Page<ExpenseEntity> expensesPage = expensesRepository.findByCategoryIdFromTo(
                 userId,
+                categoryId,
+                from,
+                to,
                 PageRequest.of(
                         page,
                         size,
