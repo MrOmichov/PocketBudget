@@ -2,6 +2,10 @@ package org.mromichov.pocket_budget.expenses;
 
 import org.mromichov.pocket_budget.categories.CategoriesRepository;
 import org.mromichov.pocket_budget.categories.CategoryEntity;
+import org.mromichov.pocket_budget.expenses.responses.CategoryExpenseSummary;
+import org.mromichov.pocket_budget.expenses.responses.CategoryExpenseSummaryRow;
+import org.mromichov.pocket_budget.expenses.responses.ExpensesPageResponse;
+import org.mromichov.pocket_budget.expenses.responses.ExpensesSummaryResponse;
 import org.mromichov.pocket_budget.users.UserEntity;
 import org.mromichov.pocket_budget.users.UsersRepository;
 import org.springframework.data.domain.Page;
@@ -14,6 +18,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigInteger;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class ExpensesService {
@@ -28,13 +34,36 @@ public class ExpensesService {
     }
 
     @Transactional(readOnly = true)
-    public ExpensesPageResponse expenses(long userId, LocalDate from, LocalDate to, Long categoryId, int page, int size) {
-        if (from != null && to != null && from.isAfter(to)) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Начальная дата не может быть после конечной"
+    public ExpensesSummaryResponse sumExpenses(long userId, LocalDate from, LocalDate to, Long categoryId) {
+        checkFromToDates(from, to);
+        List<CategoryExpenseSummaryRow> rows = expensesRepository.sumByCategoryIdFromTo(userId, categoryId, from, to);
+
+        BigInteger totalAmount = BigInteger.ZERO;
+        long expenseCount = 0L;
+        List<CategoryExpenseSummary> summaries = new ArrayList<>();
+        for (CategoryExpenseSummaryRow row : rows) {
+            totalAmount = totalAmount.add(row.getTotalAmount().toBigIntegerExact());
+            expenseCount += row.getExpenseCount();
+            summaries.add(
+                    new CategoryExpenseSummary(
+                            row.getCategoryId(),
+                            row.getCategory(),
+                            row.getTotalAmount().toBigIntegerExact(),
+                            row.getExpenseCount()
+                    )
             );
         }
+
+        return new ExpensesSummaryResponse(
+                totalAmount,
+                expenseCount,
+                summaries
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public ExpensesPageResponse expenses(long userId, LocalDate from, LocalDate to, Long categoryId, int page, int size) {
+        checkFromToDates(from, to);
 
         Page<ExpenseEntity> expensesPage = expensesRepository.findByCategoryIdFromTo(
                 userId,
@@ -120,5 +149,14 @@ public class ExpensesService {
                         "Пользователь не найден"
                 )
         );
+    }
+
+    private void checkFromToDates(LocalDate from, LocalDate to) {
+        if (from != null && to != null && from.isAfter(to)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Начальная дата не может быть после конечной"
+            );
+        }
     }
 }

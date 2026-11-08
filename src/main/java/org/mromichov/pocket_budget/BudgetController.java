@@ -8,8 +8,13 @@ import org.mromichov.pocket_budget.categories.Category;
 import org.mromichov.pocket_budget.expenses.Expense;
 import org.mromichov.pocket_budget.expenses.ExpensesService;
 import org.mromichov.pocket_budget.expenses.PostExpenseRequest;
+import org.mromichov.pocket_budget.expenses.responses.ExpensesSummaryResponse;
 import org.mromichov.pocket_budget.users.BudgetUserDetails;
+import org.mromichov.pocket_budget.users.RegisterUserRequest;
+import org.mromichov.pocket_budget.users.RegisteredUserResponse;
+import org.mromichov.pocket_budget.users.RegistrationService;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.Errors;
@@ -26,10 +31,12 @@ import java.util.stream.Collectors;
 public class BudgetController {
     private final ExpensesService expensesService;
     private final CategoriesService categoriesService;
+    private final RegistrationService registrationService;
 
-    public BudgetController(ExpensesService expensesService, CategoriesService categoriesService) {
+    public BudgetController(ExpensesService expensesService, CategoriesService categoriesService, RegistrationService registrationService) {
         this.expensesService = expensesService;
         this.categoriesService = categoriesService;
+        this.registrationService = registrationService;
     }
 
     @GetMapping("/api/categories")
@@ -68,6 +75,22 @@ public class BudgetController {
         );
     }
 
+    @GetMapping("/api/expenses/summary")
+    public ExpensesSummaryResponse sumExpenses(
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate from,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate to,
+            @RequestParam(required = false)
+            @Min(1L)
+            Long categoryId,
+            @AuthenticationPrincipal BudgetUserDetails currentUser
+    ) {
+        return expensesService.sumExpenses(currentUser.getId(), from, to, categoryId);
+    }
+
     @GetMapping("/api/expenses/{id}")
     public Expense expenseById(
             @PathVariable
@@ -78,6 +101,7 @@ public class BudgetController {
     ) {
         return expensesService.expenseById(id, currentUser.getId());
     }
+
 
     @DeleteMapping("/api/expenses/{id}")
     public ResponseEntity<Void> deleteExpenseById(
@@ -107,5 +131,12 @@ public class BudgetController {
         }
         Expense expense = expensesService.newExpense(currentUser.getId(), request);
         return ResponseEntity.created(URI.create("/api/expenses/" + expense.id())).body(expense);
+    }
+
+
+    @PostMapping("/api/auth/register")
+    public ResponseEntity<RegisteredUserResponse> registerUser(@Valid @RequestBody RegisterUserRequest request) {
+        RegisteredUserResponse response = registrationService.registerUser(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

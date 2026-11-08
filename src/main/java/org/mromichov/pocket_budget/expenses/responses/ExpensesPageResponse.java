@@ -1,4 +1,6 @@
-package org.mromichov.pocket_budget.expenses;
+package org.mromichov.pocket_budget.expenses.responses;
+
+import org.mromichov.pocket_budget.expenses.Expense;
 
 import java.util.List;
 
