@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light"><title>Pocket Budget</title>
+<link rel="stylesheet" href="/styles.css"><script src="/app.js" defer></script>
+</head>
+<body>
+<header class="header"><a class="brand" href="/"><span class="mark" aria-hidden="true">p.</span> pocket budget</a><div id="account" hidden><span id="username"></span><button id="logout" class="text-button">Выйти</button></div></header>
+<main>
+<section id="auth" class="auth" hidden>
+<div class="intro"><p class="eyebrow">ЛИЧНЫЕ ФИНАНСЫ</p><h1>Чтобы знать,<br>куда ушли деньги.</h1><p class="muted">Записывайте расходы, смотрите итоги.<br>Всё остальное — по желанию.</p></div>
+<div class="auth-card"><div class="tabs"><button id="login-tab" aria-pressed="true">Вход</button><button id="register-tab" aria-pressed="false">Регистрация</button></div>
+<form id="auth-form"><label>Имя пользователя<input id="auth-user" name="username" autocomplete="username" required maxlength="50" pattern="[a-z0-9_]{3,50}" placeholder="например, persik"></label><p class="hint">3–50 символов: a–z, цифры и _</p>
+<label>Пароль<input id="auth-password" name="password" type="password" autocomplete="current-password" required></label>
+<p id="auth-error" class="error" role="alert"></p><button id="auth-submit" class="primary full">Войти</button></form></div>
+</section>
+<section id="dashboard" hidden>
+<div class="page-heading"><div><p class="eyebrow">ВАШ УЧЁТ</p><h1>Расходы</h1></div><button id="add-open" class="primary">+ Добавить расход</button></div>
+<form id="filters" class="filters"><label>С даты<input id="from" type="date"></label><label>По дату<input id="to" type="date"></label><label class="category-filter">Категория<select id="filter-category"><option value="">Все категории</option></select></label><button class="secondary">Показать</button><button id="reset" type="button" class="text-button">Сбросить</button></form>
+<div class="overview"><section class="total-card"><p class="eyebrow">ИТОГО ЗА ПЕРИОД</p><p id="total" class="total">—</p><p id="count" class="muted">Загружаем расходы</p></section><section class="breakdown"><h2>По категориям</h2><div id="categories-summary"></div></section></div>
+<section class="ledger"><div class="section-heading"><h2>История расходов</h2><span id="list-count" class="muted"></span></div><div class="table-scroll"><table><thead><tr><th scope="col">Дата</th><th scope="col">Категория</th><th scope="col" class="number">Сумма</th><th scope="col"><span class="sr-only">Действия</span></th></tr></thead><tbody id="expenses"></tbody></table></div><p id="empty" class="empty" hidden>Пока ничего нет. Добавьте расход или измените фильтры.</p><div class="pagination"><span id="page-label" class="muted"></span><div><button id="prev" class="secondary" aria-label="Предыдущая страница">←</button><button id="next" class="secondary" aria-label="Следующая страница">→</button></div></div></section>
+</section>
+<p id="notice" class="notice" role="status" aria-live="polite"></p>
+</main>
+<footer>Сначала замечать. Потом решать.</footer>
+<dialog id="expense-dialog"><form id="expense-form"><div class="section-heading"><h2>Новый расход</h2><button id="add-close" type="button" class="text-button" aria-label="Закрыть">✕</button></div><label>Сумма, ₽<input id="amount" type="text" inputmode="decimal" placeholder="0,00" required autocomplete="off"></label><label>Категория<select id="add-category" required></select></label><label>Дата<input id="spent-at" type="date" required></label><p id="expense-error" class="error" role="alert"></p><button id="save" class="primary full">Сохранить расход</button></form></dialog>
+<dialog id="delete-dialog"><form id="delete-form"><h2>Удалить расход?</h2><p id="delete-description" class="muted"></p><p id="delete-error" class="error" role="alert"></p><div class="dialog-actions"><button id="delete-cancel" type="button" class="secondary">Оставить</button><button id="delete-confirm" class="danger">Удалить</button></div></form></dialog>
+</body></html>
