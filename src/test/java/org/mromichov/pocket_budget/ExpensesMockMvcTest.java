@@ -1,15 +1,14 @@
 package org.mromichov.pocket_budget;
 
-import org.junit.jupiter.api.Test;
-import org.mromichov.pocket_budget.users.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
-
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import java.util.stream.Stream;
 import org.mromichov.pocket_budget.expenses.Expense;
-import org.mromichov.pocket_budget.expenses.ExpensesPageResponse;
+import org.mromichov.pocket_budget.expenses.responses.ExpensesPageResponse;
+import org.mromichov.pocket_budget.users.BudgetUserDetails;
+import org.mromichov.pocket_budget.users.UserEntity;
+import org.mromichov.pocket_budget.users.UsersRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -21,13 +20,13 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigInteger;
 import java.time.LocalDate;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -41,12 +40,12 @@ public class ExpensesMockMvcTest {
     void postAndGetNewExpense(@Autowired MockMvc mvc, @Autowired ObjectMapper objectMapper) throws Exception {
         MvcResult postResult = mvc.perform(post("/api/expenses").with(user(principal)).with(csrf()).contentType("application/json").content(
                         """
-                        {
-                            "amount": 300,
-                            "categoryId": %d,
-                            "spentAt": "2026-10-19"
-                        }
-                        """.formatted(categoryId)))
+                                {
+                                    "amount": 300,
+                                    "categoryId": %d,
+                                    "spentAt": "2026-10-19"
+                                }
+                                """.formatted(categoryId)))
                 .andExpect(status().isCreated())
                 .andExpect(content().contentType("application/json"))
                 .andReturn();
@@ -83,7 +82,7 @@ public class ExpensesMockMvcTest {
     @ParameterizedTest
     @MethodSource("invalidExpenses")
     void invalidPostDoesNotSaveExpense(String body, @Autowired MockMvc mvc,
-                                      @Autowired JdbcTemplate jdbc) throws Exception {
+                                       @Autowired JdbcTemplate jdbc) throws Exception {
         mvc.perform(post("/api/expenses").with(user(principal)).with(csrf()).contentType("application/json").content(body.replace("CATEGORY_ID", categoryId.toString())))
                 .andExpect(status().isBadRequest());
         assertThat(jdbc.queryForObject("SELECT count(*) FROM expenses", Long.class)).isZero();
@@ -100,18 +99,19 @@ public class ExpensesMockMvcTest {
                         """.formatted(category));
         return Stream.concat(Stream.concat(amounts, categories), Stream.of(
                 """
-                {"categoryId":CATEGORY_ID,"spentAt":"2026-10-19"}
-                """,
+                        {"categoryId":CATEGORY_ID,"spentAt":"2026-10-19"}
+                        """,
                 """
-                {"amount":300,"spentAt":"2026-10-19"}
-                """,
+                        {"amount":300,"spentAt":"2026-10-19"}
+                        """,
                 """
-                {"amount":300,"categoryId":CATEGORY_ID}
-                """,
+                        {"amount":300,"categoryId":CATEGORY_ID}
+                        """,
                 """
-                {"amount":300,"categoryId":CATEGORY_ID,"spentAt":null}
-                """));
+                        {"amount":300,"categoryId":CATEGORY_ID,"spentAt":null}
+                        """));
     }
+
     @Test
     void pagesSortByDateThenId(@Autowired MockMvc mvc, @Autowired ObjectMapper mapper) throws Exception {
         Expense older = create(mvc, mapper, "2026-10-19");
@@ -129,7 +129,7 @@ public class ExpensesMockMvcTest {
 
     @Test
     void partialLastPageAndBeyondKeepMetadata(@Autowired MockMvc mvc,
-                                             @Autowired ObjectMapper mapper) throws Exception {
+                                              @Autowired ObjectMapper mapper) throws Exception {
         Expense oldest = create(mvc, mapper, "2026-10-19");
         create(mvc, mapper, "2026-10-20");
         create(mvc, mapper, "2026-10-21");
@@ -143,7 +143,7 @@ public class ExpensesMockMvcTest {
 
     @Test
     void emptyDatabaseReturnsEmptyPage(@Autowired MockMvc mvc,
-                                      @Autowired ObjectMapper mapper) throws Exception {
+                                       @Autowired ObjectMapper mapper) throws Exception {
         ExpensesPageResponse page = readPage(mvc, mapper, 0, 2);
         assertThat(page.items()).isEmpty();
         assertMetadata(page, 0, 2, 0, 0);
@@ -178,7 +178,7 @@ public class ExpensesMockMvcTest {
 
     @Test
     void categoriesIncludeUnusedCategoriesInIdOrder(@Autowired MockMvc mvc,
-                                                     @Autowired JdbcTemplate jdbc) throws Exception {
+                                                    @Autowired JdbcTemplate jdbc) throws Exception {
         Long unused = jdbc.queryForObject(
                 "INSERT INTO categories(name) VALUES (?) RETURNING id", Long.class, "unused");
         mvc.perform(get("/api/categories").with(user(principal)))
@@ -199,8 +199,8 @@ public class ExpensesMockMvcTest {
         jdbc.update("DELETE FROM categories WHERE id = ?", unknown);
         Long before = jdbc.queryForObject("SELECT count(*) FROM expenses", Long.class);
         mvc.perform(post("/api/expenses").with(user(principal)).with(csrf()).contentType("application/json").content("""
-                {"amount":300,"categoryId":%d,"spentAt":"2026-10-19"}
-                """.formatted(unknown)))
+                        {"amount":300,"categoryId":%d,"spentAt":"2026-10-19"}
+                        """.formatted(unknown)))
                 .andExpect(status().isNotFound());
         assertEquals(before, jdbc.queryForObject("SELECT count(*) FROM expenses", Long.class));
     }
@@ -209,8 +209,8 @@ public class ExpensesMockMvcTest {
     void postWithoutCsrfIsRejected(@Autowired MockMvc mvc, @Autowired JdbcTemplate jdbc) throws Exception {
         mvc.perform(post("/api/expenses").with(user(principal))
                         .contentType("application/json").content("""
-                        {"amount":300,"categoryId":%d,"spentAt":"2026-10-19"}
-                        """.formatted(categoryId)))
+                                {"amount":300,"categoryId":%d,"spentAt":"2026-10-19"}
+                                """.formatted(categoryId)))
                 .andExpect(status().isForbidden());
         assertThat(jdbc.queryForObject("SELECT count(*) FROM expenses", Long.class)).isZero();
     }
@@ -252,8 +252,8 @@ public class ExpensesMockMvcTest {
 
     @Test
     void getOtherUsersExpenseByKnownIdReturns404(@Autowired MockMvc mvc,
-                                                @Autowired ObjectMapper mapper,
-                                                @Autowired UsersRepository users) throws Exception {
+                                                 @Autowired ObjectMapper mapper,
+                                                 @Autowired UsersRepository users) throws Exception {
         Expense created = create(mvc, mapper, "2026-10-19");
         var other = users.save(new UserEntity(
                 "other_" + java.util.UUID.randomUUID().toString().replace("-", ""),
@@ -271,8 +271,8 @@ public class ExpensesMockMvcTest {
 
     @Test
     void getMissingExpenseByIdReturns404(@Autowired MockMvc mvc,
-                                        @Autowired ObjectMapper mapper,
-                                        @Autowired JdbcTemplate jdbc) throws Exception {
+                                         @Autowired ObjectMapper mapper,
+                                         @Autowired JdbcTemplate jdbc) throws Exception {
         Expense created = create(mvc, mapper, "2026-10-19");
         jdbc.update("DELETE FROM expenses WHERE id = ?", created.id());
 
@@ -282,7 +282,7 @@ public class ExpensesMockMvcTest {
 
     @Test
     void getExpenseByIdWithoutAuthenticationReturns401(@Autowired MockMvc mvc,
-                                                      @Autowired ObjectMapper mapper) throws Exception {
+                                                       @Autowired ObjectMapper mapper) throws Exception {
         Expense created = create(mvc, mapper, "2026-10-19");
 
         mvc.perform(get("/api/expenses/{id}", created.id()).with(anonymous()))
@@ -291,9 +291,9 @@ public class ExpensesMockMvcTest {
 
     @Test
     void deleteOwnExpenseRemovesItAndKeepsRelatedRows(@Autowired MockMvc mvc,
-                                                     @Autowired ObjectMapper mapper,
-                                                     @Autowired jakarta.persistence.EntityManager em,
-                                                     @Autowired JdbcTemplate jdbc) throws Exception {
+                                                      @Autowired ObjectMapper mapper,
+                                                      @Autowired jakarta.persistence.EntityManager em,
+                                                      @Autowired JdbcTemplate jdbc) throws Exception {
         Expense created = create(mvc, mapper, "2026-10-19");
         mvc.perform(delete("/api/expenses/{id}", created.id()).with(user(principal)).with(csrf()))
                 .andExpect(status().isNoContent())
@@ -314,10 +314,10 @@ public class ExpensesMockMvcTest {
 
     @Test
     void deleteOtherUsersExpenseReturns404AndKeepsIt(@Autowired MockMvc mvc,
-                                                    @Autowired ObjectMapper mapper,
-                                                    @Autowired UsersRepository users,
-                                                    @Autowired jakarta.persistence.EntityManager em,
-                                                    @Autowired JdbcTemplate jdbc) throws Exception {
+                                                     @Autowired ObjectMapper mapper,
+                                                     @Autowired UsersRepository users,
+                                                     @Autowired jakarta.persistence.EntityManager em,
+                                                     @Autowired JdbcTemplate jdbc) throws Exception {
         Expense created = create(mvc, mapper, "2026-10-19");
         var other = users.save(new UserEntity(
                 "other_" + java.util.UUID.randomUUID().toString().replace("-", ""),
@@ -347,7 +347,7 @@ public class ExpensesMockMvcTest {
 
     @Test
     void deleteWithoutCsrfReturns403AndKeepsExpense(@Autowired MockMvc mvc,
-                                                   @Autowired ObjectMapper mapper) throws Exception {
+                                                    @Autowired ObjectMapper mapper) throws Exception {
         Expense created = create(mvc, mapper, "2026-10-19");
         mvc.perform(delete("/api/expenses/{id}", created.id()).with(user(principal)))
                 .andExpect(status().isForbidden());
@@ -358,7 +358,7 @@ public class ExpensesMockMvcTest {
 
     @Test
     void deleteWithInvalidCsrfReturns403AndKeepsExpense(@Autowired MockMvc mvc,
-                                                       @Autowired ObjectMapper mapper) throws Exception {
+                                                        @Autowired ObjectMapper mapper) throws Exception {
         Expense created = create(mvc, mapper, "2026-10-19");
         mvc.perform(delete("/api/expenses/{id}", created.id())
                         .with(user(principal)).with(csrf().useInvalidToken()))

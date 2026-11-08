@@ -4,8 +4,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.mromichov.pocket_budget.expenses.ExpensesPageResponse;
 import org.mromichov.pocket_budget.expenses.ExpensesService;
+import org.mromichov.pocket_budget.expenses.responses.ExpensesPageResponse;
 import org.mromichov.pocket_budget.security.SecurityConfig;
 import org.mromichov.pocket_budget.users.BudgetUserDetails;
 import org.mromichov.pocket_budget.users.BudgetUserDetailsService;
@@ -34,6 +34,8 @@ class ExpensesTest {
     private org.mromichov.pocket_budget.categories.CategoriesService categoriesService;
     @MockitoBean
     private BudgetUserDetailsService userDetailsService;
+    @MockitoBean
+    private org.mromichov.pocket_budget.users.RegistrationService registrationService;
     private BudgetUserDetails principal;
 
     @BeforeEach
