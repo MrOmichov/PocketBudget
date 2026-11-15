@@ -135,7 +135,7 @@ public class ExpensesService {
     private static Expense toExpense(ExpenseEntity entity) {
         return new Expense(
                 entity.getId(),
-                BigInteger.valueOf(entity.getAmount()),
+                entity.getAmount(),
                 entity.getCategory().getId(),
                 entity.getCategory().getName(),
                 entity.getSpentAt()

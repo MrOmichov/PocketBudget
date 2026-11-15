@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mromichov.pocket_budget.expenses.Expense;
 import org.mromichov.pocket_budget.expenses.responses.ExpensesPageResponse;
 import org.mromichov.pocket_budget.users.BudgetUserDetails;
 import org.mromichov.pocket_budget.users.UserEntity;
@@ -80,7 +81,7 @@ class ExpensesFiltersTest {
     void filtersAreInclusiveAndCombined(String from, String to, String category, String expected) throws Exception {
         var request = filteredRequest(from, to, category);
         ExpensesPageResponse result = read(request);
-        assertThat(result.items().stream().map(e -> e.amount().longValueExact()).toList())
+        assertThat(result.items().stream().map(Expense::amount).toList())
                 .containsExactlyElementsOf(Arrays.stream(expected.split(";")).map(Long::valueOf).toList());
         assertEquals(expected.split(";").length, result.totalElements());
         assertEquals(1, result.totalPages());
@@ -92,8 +93,8 @@ class ExpensesFiltersTest {
                 .param("size", "1").param("page", "0"));
         ExpensesPageResponse second = read(filteredRequest("2026-10-10", "2026-10-20", "food")
                 .param("size", "1").param("page", "1"));
-        assertEquals(400L, first.items().get(0).amount().longValueExact());
-        assertEquals(200L, second.items().get(0).amount().longValueExact());
+        assertEquals(400L, first.items().get(0).amount());
+        assertEquals(200L, second.items().get(0).amount());
         assertEquals(2L, first.totalElements());
         assertEquals(2L, second.totalElements());
         assertEquals(2, first.totalPages());

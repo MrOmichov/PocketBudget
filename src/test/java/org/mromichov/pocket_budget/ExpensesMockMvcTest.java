@@ -18,7 +18,6 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 
-import java.math.BigInteger;
 import java.time.LocalDate;
 import java.util.stream.Stream;
 
@@ -51,7 +50,7 @@ public class ExpensesMockMvcTest {
                 .andReturn();
 
         Expense createdExpense = objectMapper.readValue(postResult.getResponse().getContentAsString(), Expense.class);
-        assertEquals(new BigInteger("300"), createdExpense.amount());
+        assertEquals(300L, createdExpense.amount());
         assertEquals("food", createdExpense.category());
         assertEquals(categoryId.longValue(), createdExpense.categoryId());
         assertEquals(LocalDate.of(2026, 10, 19), createdExpense.spentAt());
